@@ -1,0 +1,46 @@
+[
+  {
+    "id": "brampton-construction",
+    "title": "Construction Projects",
+    "url": "https://www1.brampton.ca/en/residents/Roads-and-Traffic/Pages/Construction-Projects.aspx",
+    "publisher": "City of Brampton",
+    "date": null,
+    "geography": "Brampton, Ontario",
+    "sourceType": "Municipal construction information",
+    "topics": ["brampton", "job site", "construction", "roadwork", "road closure", "haul route", "detour", "project"],
+    "personas": ["scout", "starter"],
+    "kind": "evidence",
+    "origin": "public",
+    "extractedText": "The information below is subject to change, and completion dates are tentative.",
+    "fact": "The City of Brampton says the completion dates on its construction map are tentative."
+  },
+  {
+    "id": "ontario-cvor",
+    "title": "Get a commercial vehicle operator’s registration (CVOR) certificate",
+    "url": "https://www.ontario.ca/page/get-commercial-vehicle-operators-registration-cvor-certificate",
+    "publisher": "Ontario Ministry of Transportation",
+    "date": null,
+    "geography": "Ontario",
+    "sourceType": "Provincial operating guidance",
+    "topics": ["ontario", "cvor", "registration", "first truck", "dump truck", "owner operator", "buying", "ownership"],
+    "personas": ["starter"],
+    "kind": "evidence",
+    "origin": "public",
+    "extractedText": "Before you apply, check whether your new or used vehicle needs a CVOR (Commercial Vehicle Operator’s Registration) certificate.",
+    "fact": "Ontario advises checking whether your new or used vehicle needs a CVOR certificate before you apply."
+  },
+  {
+    "id": "first-truck-question",
+    "title": "First truck, first week",
+    "url": null,
+    "publisher": "Fictional demo question",
+    "date": null,
+    "geography": "Ontario (scenario)",
+    "sourceType": "Illustrative audience question",
+    "topics": ["first truck", "owner operator", "buying", "maintenance", "startup costs", "dump truck", "haul route"],
+    "personas": ["starter"],
+    "kind": "insight",
+    "origin": "fictional",
+    "extractedText": "What questions should I ask before buying my first dump truck, and what should I plan for on the first day?"
+  }
+]
