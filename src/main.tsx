@@ -110,15 +110,26 @@ function App() {
         {notice && <p role="status" className="notice">{notice}</p>}
         {page === 'submit' ? <>
           <section className="submission" aria-label="New submission">
-            <div className="agent-flow" role="img" aria-label="Research Agent under construction. Content Orchestration Agent.">
-              <div className="agent research-agent" aria-hidden="true">
-                Research<br />Agent
-                <span className="tool hammer">🔨</span>
-                <span className="tool wrench">🔧</span>
+            <section className="agent-flow" aria-labelledby="agent-flow-title">
+              <h2 id="agent-flow-title">Agent workflow</h2>
+              <div className="agent-flow-cards">
+                <div className="agent-card">
+                  <span className="agent-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" fill="none"><circle cx="13" cy="13" r="8" stroke="currentColor" strokeWidth="2.5" /><path d="m19 19 9 9" stroke="currentColor" strokeWidth="2.5" /></svg>
+                  </span>
+                  <h3>Research Agent</h3>
+                  <p>Finds source material for the question.</p>
+                </div>
+                <div className="agent-connector" aria-hidden="true" />
+                <div className="agent-card">
+                  <span className="agent-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" fill="none"><path d="m8 8 17 9L8 25" stroke="currentColor" strokeWidth="2" /><circle cx="8" cy="8" r="4" fill="currentColor" /><circle cx="25" cy="17" r="4" fill="currentColor" /><circle cx="8" cy="25" r="4" fill="currentColor" /></svg>
+                  </span>
+                  <h3>Content Orchestration Agent</h3>
+                  <p>Turns the research into content drafts.</p>
+                </div>
               </div>
-              <div className="flow-arrow horizontal" aria-hidden="true" />
-              <div className="agent orchestration-agent" aria-hidden="true">Content<br />Orchestration<br />Agent</div>
-            </div>
+            </section>
             <div className="flow-arrow vertical" aria-hidden="true" />
             <div className="submission-modes" role="group" aria-label="Submission mode">
               <button type="button" aria-pressed={submissionMode === 'live'} onClick={() => setSubmissionMode('live')}>Live sources</button>
