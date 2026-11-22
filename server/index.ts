@@ -8,11 +8,13 @@ import { brand, personas, samples } from './library.ts';
 import { demoProvider, openAIProvider, validateContent } from './providers.ts';
 import type { Provider } from './providers.ts';
 import { createJob } from './workflow.ts';
+import { createStarterJob } from './starter.ts';
 import { runChecks } from './review.ts';
 import { createStore } from './store.ts';
 
 class RequestError extends Error {
-  constructor(readonly status: number, message: string) { super(message); }
+  readonly status: number;
+  constructor(status: number, message: string) { super(message); this.status = status; }
 }
 
 async function body(request: IncomingMessage) {
@@ -58,6 +60,22 @@ export function app(directory: string, provider: Provider) {
         } catch (error) {
           throw new RequestError(422, error instanceof Error ? error.message : 'Could not create a draft.');
         }
+        store.save(job);
+        return json(response, 201, job);
+      }
+      if (request.method === 'POST' && path === '/api/starter') {
+        const { questions, urls } = await body(request);
+        if (!Array.isArray(questions) || questions.length < 1 || questions.length > 8 ||
+            questions.some(q => typeof q !== 'string' || !q.trim() || q.length > 500) ||
+            !Array.isArray(urls) || urls.length < 1 || urls.length > 5 ||
+            urls.some(u => typeof u !== 'string' || u.length > 2000 || !/^https?:\/\//i.test(u))) {
+          throw new RequestError(400, 'Enter 1 to 8 questions and 1 to 5 public HTTP(S) article URLs.');
+        }
+        const key = process.env.OPENAI_API_KEY?.trim();
+        if (!key) throw new RequestError(422, 'Live generation needs OPENAI_API_KEY in the backend .env file. Restart the server after adding it.');
+        let job;
+        try { job = await createStarterJob(questions.map((q: string) => q.trim()), urls.map((u: string) => u.trim()), key, process.env.OPENAI_MODEL || 'gpt-4.1-mini'); }
+        catch (error) { throw new RequestError(422, error instanceof Error ? error.message : 'Could not prepare the live draft.'); }
         store.save(job);
         return json(response, 201, job);
       }

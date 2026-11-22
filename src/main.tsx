@@ -19,6 +19,8 @@ async function api<T>(path: string, method = 'GET', body?: object): Promise<T> {
 function App() {
   const [desk, setDesk] = useState<Desk>();
   const [input, setInput] = useState('');
+  const [questions, setQuestions] = useState('');
+  const [urls, setUrls] = useState('');
   const [page, setPage] = useState<Page>('submit');
   const [selected, setSelected] = useState('');
   const [busy, setBusy] = useState(false);
@@ -54,6 +56,18 @@ function App() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function submitStarter(event: FormEvent) {
+    event.preventDefault();
+    const questionLines = questions.split('\n').map(line => line.trim()).filter(Boolean);
+    const urlLines = urls.split('\n').map(line => line.trim()).filter(Boolean);
+    setBusy(true); setError(''); setNotice('');
+    try {
+      updateJob(await api<Job>('/api/starter', 'POST', { questions: questionLines, urls: urlLines }));
+      setPage('review');
+    } catch (error) { setError((error as Error).message); }
+    finally { setBusy(false); }
   }
 
   async function updateDraft(draft: Draft, patch: { content?: Content; status?: Status }) {
@@ -98,8 +112,25 @@ function App() {
           <section className="hero">
             <span className="eyebrow">CHALLENGE 3B</span>
             <h1>New submission</h1>
-            <p>Turn industry news and questions into short-video drafts for coordinator review.</p>
+            <p>Turn your first-time buyer questions and trusted article links into a sourced video draft for review.</p>
           </section>
+          <section className="card compose live-compose">
+            <span className="eyebrow">LIVE STARTER DEMO</span>
+            <h2>Generate a first-time buyer script</h2>
+            <p>Paste questions you found in public forums. Add public HTML pages that may answer them. The app reads those pages now, then drafts a script for Starter. The links are supplied by you and still require human source review.</p>
+            <form onSubmit={submitStarter}>
+              <label htmlFor="buyer-questions">Buyer questions, one per line (up to 8)</label>
+              <textarea id="buyer-questions" rows={4} value={questions} onChange={event => setQuestions(event.target.value)}
+                placeholder="What should I check before buying my first dump truck?" required />
+              <label htmlFor="evidence-urls">Evidence page URLs, one per line (up to 5)</label>
+              <textarea id="evidence-urls" rows={4} value={urls} onChange={event => setUrls(event.target.value)}
+                placeholder="https://www.ontario.ca/page/get-commercial-vehicle-operators-registration-cvor-certificate" required />
+              <div className="form-footer"><small>Live mode needs OPENAI_API_KEY on the server.</small>
+                <button className="primary" disabled={busy || !questions.trim() || !urls.trim()}>{busy ? 'Reading sources and writing...' : 'Generate live Starter draft'}</button>
+              </div>
+            </form>
+          </section>
+          <h2>Existing template demo</h2>
           <div className="submission-grid">
             <section className="card compose">
               <h2>What should we cover?</h2>
@@ -169,7 +200,8 @@ function DraftCard({ draft, busy, save }: {
 }) {
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState(draft.content);
-  const fields = [['angle', 'Content angle'], ['fit', 'Why it fits'], ['hook', 'Hook'], ['script', 'Script'], ['caption', 'Caption']] as const;
+  const fields = [['angle', 'Content angle'], ['fit', 'Why it fits'], ['answer', 'Answer grounded in sources'], ['hook', 'Hook'], ['script', 'Script'], ['caption', 'Caption']] as const;
+  const activeFields = fields.filter(([key]) => key !== 'answer' || content.answer !== undefined);
   return <article className="card draft">
     <header>
       <div><span className="eyebrow">AI-GENERATED PERSONA</span><h2>{draft.persona.name}</h2><p>{draft.persona.audience}</p></div>
@@ -179,8 +211,8 @@ function DraftCard({ draft, busy, save }: {
       event.preventDefault();
       if (await save({ content: { ...content, assumptions: content.assumptions.filter(item => item.trim()) } })) setEditing(false);
     }}>
-      {fields.map(([key, label]) => <label key={key}>{label}
-        <textarea value={content[key]} rows={key === 'script' ? 6 : 2} required
+      {activeFields.map(([key, label]) => <label key={key}>{label}
+        <textarea value={content[key] ?? ''} rows={key === 'script' || key === 'answer' ? 6 : 2} required
           onChange={event => setContent({ ...content, [key]: event.target.value })} />
       </label>)}
       {content.shots.map((shot, index) => <fieldset key={index}><legend>Shot {index + 1}</legend>
@@ -191,6 +223,18 @@ function DraftCard({ draft, busy, save }: {
           }} />
         </label>)}
       </fieldset>)}
+      {content.evidence?.map((item, index) => <fieldset key={index}><legend>Claim citation {index + 1}</legend>
+        <label>Exact claim wording
+          <textarea value={item.statement} rows={2} onChange={event => setContent({ ...content, evidence: content.evidence?.map((entry, i) => i === index ? { ...entry, statement: event.target.value } : entry) })} />
+        </label>
+        <label>Supporting source
+          <select value={item.sourceId} onChange={event => {
+            const source = draft.sources.find(source => source.id === event.target.value);
+            setContent({ ...content, evidence: content.evidence?.map((entry, i) => i === index ? { ...entry, sourceId: event.target.value, excerpt: source?.extractedText ?? '' } : entry) });
+          }}>{draft.sources.map(source => <option key={source.id} value={source.id}>{source.publisher}: {source.extractedText.slice(0, 90)}</option>)}</select>
+        </label>
+        <button type="button" onClick={() => setContent({ ...content, evidence: content.evidence?.filter((_, i) => i !== index) })}>Remove citation</button>
+      </fieldset>)}
       <label>Assumptions and verification items, one per line
         <textarea rows={3} value={content.assumptions.join('\n')} onChange={event => setContent({ ...content, assumptions: event.target.value.split('\n') })} />
       </label>
@@ -199,7 +243,7 @@ function DraftCard({ draft, busy, save }: {
         <button className="primary" disabled={busy}>Save edits</button>
       </div>
     </form> : <>
-      <div className="copy">{fields.map(([key, label]) => <section key={key}><h3>{label}</h3><p>{content[key]}</p></section>)}</div>
+      <div className="copy">{activeFields.map(([key, label]) => <section key={key}><h3>{label}</h3><p>{content[key]}</p></section>)}</div>
       <section className="detail"><h3>Storyboard</h3><ol className="shots">
         {content.shots.map((shot, i) => <li key={i}><b>Visual</b><p>{shot.visual}</p><b>Audio</b><p>{shot.audio}</p></li>)}
       </ol></section>

@@ -23,7 +23,7 @@ export function runChecks(content: Content, persona: Persona, sources: Source[])
   if (!content.shots.some(shot => /\bai-generated\b/i.test(shot.visual))) {
     warnings.add('Add the AI-generated persona label to a storyboard visual.');
   }
-  const copy = [content.hook, content.script, content.caption, ...content.shots.flatMap(shot => [shot.audio, shot.visual])];
+  const copy = [content.answer ?? '', content.hook, content.script, content.caption, ...content.shots.flatMap(shot => [shot.audio, shot.visual])];
   const all = [...new Set(copy.flatMap(sentences))];
   if (/\bday[ -]in[ -]the[ -]life\b/i.test(copy.join(' ')) && !/\bfictional\b/i.test(content.script)) {
     warnings.add('Label day-in-the-life scenarios as fictional in the script.');
@@ -31,6 +31,13 @@ export function runChecks(content: Content, persona: Persona, sources: Source[])
   for (const statement of all) {
     for (const { pattern, warning } of warningPatterns) if (pattern.test(statement)) warnings.add(warning);
     if (statement === disclosure) continue;
+    const cited = content.evidence?.find(item => item.statement === statement);
+    if (cited) {
+      const linked = sources.find(item => item.id === cited.sourceId && item.kind === 'evidence' && item.origin === 'public'
+        && item.url && item.extractedText === cited.excerpt);
+      if (linked) { claims.push({ statement, source: linked }); continue; }
+      warnings.add('Claim has a missing or altered source passage: ' + statement);
+    }
     const source = sources.find(item =>
       item.kind === 'evidence' && item.origin === 'public' && item.url && item.extractedText && item.fact === statement
     );
@@ -43,6 +50,9 @@ export function runChecks(content: Content, persona: Persona, sources: Source[])
     if (actionable && !embedsClaim) continue;
     claims.push({ statement });
     warnings.add('Unsupported statement: ' + statement);
+  }
+  for (const item of content.evidence ?? []) {
+    if (!all.includes(item.statement)) warnings.add('Evidence refers to wording that is no longer in the draft: ' + item.statement);
   }
   return { claims, warnings: [...warnings] };
 }

@@ -42,6 +42,9 @@ h1 { font-size: clamp(2.25rem, 5vw, 3.65rem); line-height: 1.04; letter-spacing:
 .submission-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(245px, 1fr); gap: 20px; }
 .card { background: #fff; border: 1px solid var(--border); border-radius: 13px; padding: clamp(17px, 2.4vw, 26px); min-width: 0; box-shadow: 0 2px 4px #102d2506; }
 .compose form { margin-top: 16px; }
+.live-compose { margin-bottom: 24px; }
+.live-compose p { margin-top: 8px; }
+.live-compose form { display: grid; gap: 15px; }
 label { display: grid; gap: 6px; font-weight: 650; font-size: .93rem; }
 textarea, select { display: block; border: 1px solid #becbc1; border-radius: 8px; margin-top: 6px; width: 100%; color: #172821; background: #fafcf9; padding: 12px; font-weight: 400; font-size: 1rem; }
 textarea { resize: vertical; min-height: 64px; }

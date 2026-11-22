@@ -11,7 +11,8 @@ export type Source = {
 };
 export type Decision = { personaIds: PersonaId[]; reason: string };
 export type Content = {
-  angle: string; fit: string; hook: string; script: string; caption: string;
+  angle: string; fit: string; hook: string; script: string; caption: string; answer?: string;
+  evidence?: { statement: string; sourceId: string; excerpt: string }[];
   shots: { visual: string; audio: string }[]; assumptions: string[];
 };
 export type Status = 'pending' | 'approved' | 'rejected';
