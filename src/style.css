@@ -69,6 +69,7 @@ nav button b { color: var(--accent); margin-left: 5px; }
   font-size: .8rem;
 }
 .submission { width: min(100%, 1600px); margin-inline: auto; }
+.agent-flow { width: min(100%, 940px); margin-inline: auto; }
 .agent-flow-cards {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
@@ -76,7 +77,6 @@ nav button b { color: var(--accent); margin-left: 5px; }
 }
 .agent-card {
   min-width: 0;
-  min-height: 150px;
   padding: 17px 22px;
   border: 1px solid #735542;
   border-radius: 18px;
@@ -106,10 +106,10 @@ nav button b { color: var(--accent); margin-left: 5px; }
   background: #f5b187;
   clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
-.workflow-to-form { position: relative; width: 50%; height: 44px; margin-left: 50%; color: #f5b187; }
-.workflow-to-form::before { content: ""; position: absolute; left: 50%; top: 0; height: 18px; border-left: 2px solid; }
-.workflow-to-form::after { content: ""; position: absolute; left: 0; top: 18px; width: 50%; border-top: 2px solid; }
-.workflow-to-form span { position: absolute; left: 0; top: 18px; height: 20px; border-left: 2px solid; }
+.workflow-to-form { position: relative; width: min(100%, 940px); height: 44px; margin-inline: auto; color: #f5b187; }
+.workflow-to-form::before { content: ""; position: absolute; left: calc(75% + 14px); top: 0; height: 18px; border-left: 2px solid; }
+.workflow-to-form::after { content: ""; position: absolute; left: 50%; top: 18px; width: calc(25% + 14px); border-top: 2px solid; }
+.workflow-to-form span { position: absolute; left: 50%; top: 18px; height: 20px; border-left: 2px solid; }
 .workflow-to-form span::after { content: ""; position: absolute; left: -6px; bottom: -8px; border: 5px solid transparent; border-top-color: currentColor; }
 .flow-arrow { position: relative; color: #bdbdbd; }
 .flow-arrow::after { content: ""; position: absolute; border: 5px solid transparent; }
@@ -179,10 +179,9 @@ fieldset { min-width: 0; border: 1px solid var(--border); border-radius: 8px; }
   .persona-grid { grid-template-columns: 1fr; }
   .draft header { flex-wrap: wrap; }
   .agent-flow-cards { grid-template-columns: 1fr; }
-  .agent-card { min-height: 0; }
   .agent-connector { width: 2px; height: 30px; margin: 0 auto; }
   .agent-connector::after { width: 14px; height: 12px; right: -6px; bottom: 0; background: #f5b187; clip-path: polygon(0 0, 100% 0, 50% 100%); }
-  .workflow-to-form { width: 100%; margin-left: 0; height: 32px; }
+  .workflow-to-form { width: 100%; height: 32px; }
   .workflow-to-form::before { left: 50%; height: 26px; }
   .workflow-to-form::after { left: calc(50% - 5px); top: 23px; width: 0; border: 5px solid transparent; border-top-color: #f5b187; }
   .workflow-to-form span { display: none; }
