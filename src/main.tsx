@@ -180,18 +180,27 @@ function App() {
 }
 
 function buildHiggsfieldPrompt(draft: Draft, content: Content) {
+  const visualProfile = draft.persona.id === 'starter' ? `On-screen presenter: A woman in her early 30s, a prospective dump-truck owner-operator. She has medium-brown skin with natural texture, deep brown eyes, a softly oval face, and dark brown hair tied in a practical low ponytail. Her expression is focused, approachable, and quietly confident. Keep her face, hair, clothing, and proportions consistent in every shot.
+Wardrobe: A clean but lived-in navy work jacket over a charcoal crew-neck shirt, dark work jeans, and scuffed safety boots. Natural grooming, minimal makeup, no conspicuous jewelry or visible brand logos.
+Location: A believable Southern Ontario commercial vehicle lot beside a parked, unbranded dump truck. Show the actual scale of the cab and bed, tire tread, metal steps, mirror reflections, small traces of road dust, pavement texture, and a neutral industrial background. She can look over a plain paper buying checklist beside the truck; do not show invented forms or official documents.` : `On-screen presenter: A man in his late 30s who works around Brampton construction and hauling. He has deep-brown skin with natural texture, brown eyes, a broad face, short tightly curled black hair, and a neatly trimmed beard. His expression is attentive, calm, and practical. Keep his face, hair, clothing, and proportions consistent in every shot.
+Wardrobe: A slightly worn orange high-visibility vest with reflective strips over a navy work shirt, dark work trousers, and scuffed safety boots. No visible company branding. The vest should drape naturally with realistic seams and folds.
+Location: A believable Brampton-area staging yard near a construction site, with a parked unbranded dump truck, traffic cones, gravel, muted industrial buildings, and ordinary road wear. Show him checking a plain dispatch note or speaking near the truck while staying clear of moving equipment. Do not invent road signs, project notices, or official documents.`;
   const scenes = content.shots.map((shot, index) =>
-    `${index + 1}. Visual: ${shot.visual}\n   Audio: ${shot.audio}`
+    `${index + 1}. Visual: ${shot.visual.replace(/AI-generated persona label/gi, 'presenter')}\n   Audio: ${shot.audio}`
   ).join('\n');
-  return `Create a polished 9:16 vertical video for ${draft.persona.audience}.\n\n` +
+  const script = content.script.replace(/^AI-generated persona: [^\n]+\.\s*/i, '');
+  const caption = content.caption.replace(/^AI-generated persona: [^.]+\.\s*/i, '');
+  return `Create a photorealistic 9:16 vertical video for ${draft.persona.audience.replace(/[.!?]+$/, '')}. Cast one consistent human presenter, described below. Do not depict the persona name as a person or put it on screen.\n\n` +
+    `${visualProfile}\n\n` +
+    `Camera and realism: Eye-level camera, natural 35 mm documentary framing, restrained handheld movement, medium shots mixed with close-ups of hands and the relevant truck details. Soft overcast daylight, accurate shadows and reflections, true-to-life skin pores, fabric weave, subtle wear on boots and equipment, and ordinary background movement. Natural gestures and believable lip movement. Keep hands anatomically correct, truck proportions accurate, and the same presenter in every scene. Avoid glossy CGI, plastic skin, excessive smoothing, dramatic filters, distorted text, and stock-photo poses.\n\n` +
     `Tone and voice: ${draft.persona.voice}\n` +
     `Content angle: ${content.angle}\n` +
     `Opening hook: ${content.hook}\n\n` +
     `Storyboard:\n${scenes}\n\n` +
-    `Voiceover script:\n${content.script}\n\n` +
+    `Voiceover script:\n${script}\n\n` +
     `Keep the visuals realistic and the pacing clear. Use only the supplied script and scene details for factual claims. ` +
     `Do not add statistics, logos, or unsupported claims. Keep any on-screen text brief and readable.\n\n` +
-    `Publishing caption (not voiceover):\n${content.caption}`;
+    `Publishing caption (not voiceover):\n${caption}`;
 }
 
 function DraftCard({ draft, busy, save }: {
