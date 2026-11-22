@@ -5,7 +5,7 @@ import { resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { Draft, Status } from '../shared/types.ts';
 import { brand, personas, samples } from './library.ts';
-import { demoProvider, openAIProvider, validateContent } from './providers.ts';
+import { demoProvider, validateContent } from './providers.ts';
 import type { Provider } from './providers.ts';
 import { createJob } from './workflow.ts';
 import { createStarterJob } from './starter.ts';
@@ -123,8 +123,8 @@ export function app(directory: string, provider: Provider) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const key = process.env.OPENAI_API_KEY?.trim();
-  const provider = key ? openAIProvider(key, process.env.OPENAI_MODEL || 'gpt-4.1-mini') : demoProvider;
+  // The topic review is always a deterministic demo. Only /api/starter uses the API key.
+  const provider = demoProvider;
   const port = Number(process.env.PORT || 4173);
   app(resolve('local-data'), provider).listen(port, '127.0.0.1', () => {
     console.log('Field Desk is running at http://127.0.0.1:' + port + ' (' + provider.mode + ' mode)');

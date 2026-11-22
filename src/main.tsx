@@ -19,7 +19,6 @@ async function api<T>(path: string, method = 'GET', body?: object): Promise<T> {
 function App() {
   const [desk, setDesk] = useState<Desk>();
   const [input, setInput] = useState('');
-  const [questions, setQuestions] = useState('');
   const [urls, setUrls] = useState('');
   const [page, setPage] = useState<Page>('submit');
   const [selected, setSelected] = useState('');
@@ -44,30 +43,25 @@ function App() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!input.trim()) return;
+    const urlLines = urls.split('\n').map(line => line.trim()).filter(Boolean);
     setBusy(true);
     setError('');
     setNotice('');
     try {
-      updateJob(await api<Job>('/api/jobs', 'POST', { input }));
+      const updated = urlLines.length
+        ? await api<Job>('/api/starter', 'POST', {
+            questions: input.split('\n').map(line => line.trim()).filter(Boolean), urls: urlLines
+          })
+        : await api<Job>('/api/jobs', 'POST', { input });
+      updateJob(updated);
       setPage('review');
       setInput('');
+      setUrls('');
     } catch (error) {
       setError((error as Error).message);
     } finally {
       setBusy(false);
     }
-  }
-
-  async function submitStarter(event: FormEvent) {
-    event.preventDefault();
-    const questionLines = questions.split('\n').map(line => line.trim()).filter(Boolean);
-    const urlLines = urls.split('\n').map(line => line.trim()).filter(Boolean);
-    setBusy(true); setError(''); setNotice('');
-    try {
-      updateJob(await api<Job>('/api/starter', 'POST', { questions: questionLines, urls: urlLines }));
-      setPage('review');
-    } catch (error) { setError((error as Error).message); }
-    finally { setBusy(false); }
   }
 
   async function updateDraft(draft: Draft, patch: { content?: Content; status?: Status }) {
@@ -95,70 +89,60 @@ function App() {
   }
 
   return <div className="layout">
-    <aside className="sidebar">
-      <div className="brand"><span className="mark" aria-hidden="true">▰</span><div>{desk?.brand.workspaceName ?? 'Field Desk'}<small>BRAMPTON CONTENT STUDIO</small></div></div>
+    <header className="topbar">
+      <button type="button" className="brand" onClick={() => navigate('submit')} aria-label="ContextIQ home">Context<span>IQ</span></button>
+      <p>Turn trusted sources into video scripts for review.</p>
       <nav aria-label="Workspace">
-        <button aria-current={page === 'submit' ? 'page' : undefined} onClick={() => navigate('submit')}><span aria-hidden="true">＋</span> New submission</button>
-        <button aria-current={page === 'review' ? 'page' : undefined} onClick={() => navigate('review')}><span aria-hidden="true">▤</span> Review queue <b>{pendingCount}</b></button>
+        <button aria-current={page === 'submit' ? 'page' : undefined} onClick={() => navigate('submit')}>New submission</button>
+        <button aria-current={page === 'review' ? 'page' : undefined} onClick={() => navigate('review')}>Review queue <b>{pendingCount}</b></button>
       </nav>
-      <div className="sidebar-footer"><span className="status-dot" /> Local workspace</div>
-    </aside>
+    </header>
     <main>
-      <header className="topbar"><span>Editorial workspace</span><span className="mode">{desk?.mode === 'ai' ? 'AI generation' : 'Demo mode'}</span></header>
       <div className="workspace">
         {error && <p role="alert" className="alert">{error}</p>}
         {notice && <p role="status" className="notice">{notice}</p>}
         {page === 'submit' ? <>
-          <section className="hero">
-            <span className="eyebrow">CHALLENGE 3B</span>
-            <h1>New submission</h1>
-            <p>Turn your first-time buyer questions and trusted article links into a sourced video draft for review.</p>
-          </section>
-          <section className="card compose live-compose">
-            <span className="eyebrow">LIVE STARTER DEMO</span>
-            <h2>Generate a first-time buyer script</h2>
-            <p>Paste questions you found in public forums. Add public HTML pages that may answer them. The app reads those pages now, then drafts a script for Starter. The links are supplied by you and still require human source review.</p>
-            <form onSubmit={submitStarter}>
-              <label htmlFor="buyer-questions">Buyer questions, one per line (up to 8)</label>
-              <textarea id="buyer-questions" rows={4} value={questions} onChange={event => setQuestions(event.target.value)}
-                placeholder="What should I check before buying my first dump truck?" required />
-              <label htmlFor="evidence-urls">Evidence page URLs, one per line (up to 5)</label>
-              <textarea id="evidence-urls" rows={4} value={urls} onChange={event => setUrls(event.target.value)}
-                placeholder="https://www.ontario.ca/page/get-commercial-vehicle-operators-registration-cvor-certificate" required />
-              <div className="form-footer"><small>Live mode needs OPENAI_API_KEY on the server.</small>
-                <button className="primary" disabled={busy || !questions.trim() || !urls.trim()}>{busy ? 'Reading sources and writing...' : 'Generate live Starter draft'}</button>
+          <section className="submission" aria-label="New submission">
+            <section className="agent-flow" aria-label="Agent workflow">
+              <div className="agent-flow-cards">
+                <div className="agent-card">
+                  <span className="agent-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" fill="none"><circle cx="13" cy="13" r="8" stroke="currentColor" strokeWidth="2.5" /><path d="m19 19 9 9" stroke="currentColor" strokeWidth="2.5" /></svg>
+                  </span>
+                  <h3>Research Agent</h3>
+                  <p>Finds source material for the question.</p>
+                </div>
+                <div className="agent-connector" aria-hidden="true" />
+                <div className="agent-card">
+                  <span className="agent-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" fill="none"><path d="m8 8 17 9L8 25" stroke="currentColor" strokeWidth="2" /><circle cx="8" cy="8" r="4" fill="currentColor" /><circle cx="25" cy="17" r="4" fill="currentColor" /><circle cx="8" cy="25" r="4" fill="currentColor" /></svg>
+                  </span>
+                  <h3>Content Orchestration Agent</h3>
+                  <p>Turns the research into content drafts.</p>
+                </div>
+              </div>
+            </section>
+            <div className="workflow-to-form" aria-hidden="true"><span /></div>
+            <form onSubmit={submit} className="submission-form">
+              <label htmlFor="submission-input">Question or topic <small>One question per line for linked sources</small></label>
+              <textarea id="submission-input" value={input} onChange={event => setInput(event.target.value)} maxLength={24000}
+                placeholder="Ask your question here." rows={2} required />
+              <div className="sample-buttons" role="group" aria-label="Try a sample">{desk?.samples.filter(sample => sample.label !== 'Both personas').map(sample =>
+                <button type="button" key={sample.label} onClick={() => {
+                  setInput(sample.input);
+                  setUrls('');
+                  document.getElementById('submission-input')?.focus();
+                }}>+ {sample.label}</button>
+              )}</div>
+              <div className="flow-arrow vertical source-arrow" aria-hidden="true" />
+              <label htmlFor="evidence-urls">Source URLs <small>Optional; one public web page per line, up to 5</small></label>
+              <textarea id="evidence-urls" rows={2} value={urls} onChange={event => setUrls(event.target.value)}
+                placeholder="Add your credible sources here." />
+              <div className="form-footer">
+                <small>{urls.trim() ? 'Linked sources use the configured API key.' : 'Sample topics work without an API key.'}</small>
+                <button className="primary" disabled={busy || !desk || !input.trim()}>{busy ? 'Preparing review...' : 'Create review'}</button>
               </div>
             </form>
-          </section>
-          <h2>Existing template demo</h2>
-          <div className="submission-grid">
-            <section className="card compose">
-              <h2>What should we cover?</h2>
-              <form onSubmit={submit}>
-                <label htmlFor="submission-input">Topic, article URL, or pasted text</label>
-                <textarea id="submission-input" value={input} onChange={event => setInput(event.target.value)} maxLength={24000}
-                  placeholder="e.g. What should I check before buying my first dump truck?" rows={7} required />
-                <div className="form-footer">
-                  <small>{input.length.toLocaleString()} / 24,000</small>
-                  <button className="primary" disabled={busy || !desk || !input.trim()}>{busy ? 'Preparing review…' : 'Create review'}</button>
-                </div>
-              </form>
-            </section>
-            <section className="card examples">
-              <h2>Try a demo topic</h2>
-              <p>Load an example into the submission field.</p>
-              {desk?.samples.map(sample => <button key={sample.label} onClick={() => {
-                setInput(sample.input);
-                document.getElementById('submission-input')?.focus();
-              }}>{sample.label}<span aria-hidden="true">＋</span></button>)}
-            </section>
-          </div>
-          <section className="personas">
-            <h2>Editorial personas</h2>
-            <div className="persona-grid">{desk?.personas.map(persona => <div key={persona.id} className="card persona">
-              <span className={'persona-icon ' + persona.id} aria-hidden="true">{persona.id === 'scout' ? '◈' : '◒'}</span>
-              <div><h3>{persona.name}</h3><span className="eyebrow">AI-GENERATED PERSONA</span><p>{persona.audience}</p></div>
-            </div>)}</div>
           </section>
         </> : <>
           <section className="hero">
@@ -191,6 +175,7 @@ function App() {
         </>}
       </div>
     </main>
+    <footer className="site-footer">© 2026 Idea Alchemists · Brampton AI Innovator Hackathon. All rights reserved.</footer>
   </div>;
 }
 
