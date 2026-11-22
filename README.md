@@ -2,6 +2,16 @@
 
 Field Desk is a local prototype for Brampton AI Innovator Challenge 3B. It turns industry topics, article links, and pasted articles into short-video packages for a coordinator to review. Job Site Scout serves Brampton-area crews. Starter serves drivers considering their first dump truck.
 
+## Live first-time buyer demo
+
+The **Generate a first-time buyer script** form is the current presentation flow. Paste 1–8 buyer questions (one per line), then 1–5 public HTML article URLs (one per line). The persona is fixed to **Starter**. The backend reads the pages at submission time, selects short passages relevant to the questions, and asks the configured model to write an answer, video script, caption, and storyboard. Each factual sentence should have a source ID and the exact passage offered in support. The review screen shows those passages next to claims; a coordinator must decide whether each passage genuinely supports the wording.
+
+Set `OPENAI_API_KEY` in the backend `.env` to enable this live generation path and restart the server. The key is never sent to the browser. ChatGPT subscriptions do not provide API billing by themselves. The existing topic form below the live form remains a deterministic template demo without a key.
+
+For a dependable presentation, try a question such as “What should I check before becoming an Ontario owner-operator?” with the Ontario CVOR URL in `config/sources.json`. If the live page cannot be fetched, the app clearly marks that it used the preloaded snapshot for that known URL. Other pages must be public readable HTML. Some sites block automated reading or rely on browser-only JavaScript; the app reports this as an error instead of pretending it read them. Forum questions are pasted by the team, not scraped. The URLs supplied for answers are not automatically deemed credible.
+
+This stage deliberately does not include a research agent, persona selection, video rendering, or social publishing. Approval stays local.
+
 ## Run locally
 
 Install Node.js 22.16 or later, then run these commands from the project directory. On Windows PowerShell, use `npm.cmd` if your execution policy blocks `npm.ps1`.
@@ -59,6 +69,5 @@ Demo routing is keyword-based and drafts are templates. The backend validates AI
 
 ## Connect a research agent next
 
-1. Implement the `Researcher` interface in `server/library.ts` with an allowlist and a trusted intake queue for public articles.
-2. Have a source evaluator record the original URL, publisher, retrieval date, jurisdiction, exact supporting passage, and approved claims. Keep audience questions tagged as insights.
-3. Add freshness checks and evidence versioning. Send uncertain or conflicting claims to the coordinator with the competing passages for adjudication.
+1. Add optional source intake and credibility evaluation if the team expands beyond manually supplied URLs.
+2. Add freshness checks and evidence versioning. Send uncertain or conflicting claims to the coordinator with competing passages for adjudication.
