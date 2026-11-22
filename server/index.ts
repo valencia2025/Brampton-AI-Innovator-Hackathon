@@ -126,7 +126,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   // The topic review is always a deterministic demo. Only /api/starter uses the API key.
   const provider = demoProvider;
   const port = Number(process.env.PORT || 4173);
-  app(resolve('local-data'), provider).listen(port, '127.0.0.1', () => {
-    console.log('Field Desk is running at http://127.0.0.1:' + port + ' (' + provider.mode + ' mode)');
+  const host = process.env.HOST || '127.0.0.1';
+  app(resolve('local-data'), provider).listen(port, host, () => {
+    console.log('Field Desk is running at http://' + host + ':' + port + ' (' + provider.mode + ' mode)');
   });
 }
