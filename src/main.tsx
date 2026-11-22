@@ -21,6 +21,7 @@ function App() {
   const [input, setInput] = useState('');
   const [questions, setQuestions] = useState('');
   const [urls, setUrls] = useState('');
+  const [submissionMode, setSubmissionMode] = useState<'live' | 'template'>('live');
   const [page, setPage] = useState<Page>('submit');
   const [selected, setSelected] = useState('');
   const [busy, setBusy] = useState(false);
@@ -95,64 +96,68 @@ function App() {
   }
 
   return <div className="layout">
-    <aside className="sidebar">
-      <div className="brand"><span className="mark" aria-hidden="true">▰</span><div>{desk?.brand.workspaceName ?? 'Field Desk'}<small>BRAMPTON CONTENT STUDIO</small></div></div>
+    <header className="topbar">
+      <button type="button" className="brand" onClick={() => navigate('submit')} aria-label="ContextIQ home">Context<span>IQ</span></button>
+      <p>Turn trusted sources into video scripts for review.</p>
       <nav aria-label="Workspace">
-        <button aria-current={page === 'submit' ? 'page' : undefined} onClick={() => navigate('submit')}><span aria-hidden="true">＋</span> New submission</button>
-        <button aria-current={page === 'review' ? 'page' : undefined} onClick={() => navigate('review')}><span aria-hidden="true">▤</span> Review queue <b>{pendingCount}</b></button>
+        <button aria-current={page === 'submit' ? 'page' : undefined} onClick={() => navigate('submit')}>New submission</button>
+        <button aria-current={page === 'review' ? 'page' : undefined} onClick={() => navigate('review')}>Review queue <b>{pendingCount}</b></button>
       </nav>
-      <div className="sidebar-footer"><span className="status-dot" /> Local workspace</div>
-    </aside>
+    </header>
     <main>
-      <header className="topbar"><span>Editorial workspace</span><span className="mode">{desk?.mode === 'ai' ? 'AI generation' : 'Demo mode'}</span></header>
       <div className="workspace">
         {error && <p role="alert" className="alert">{error}</p>}
         {notice && <p role="status" className="notice">{notice}</p>}
         {page === 'submit' ? <>
-          <section className="hero">
-            <span className="eyebrow">CHALLENGE 3B</span>
-            <h1>New submission</h1>
-            <p>Turn your first-time buyer questions and trusted article links into a sourced video draft for review.</p>
-          </section>
-          <section className="card compose live-compose">
-            <span className="eyebrow">LIVE STARTER DEMO</span>
-            <h2>Generate a first-time buyer script</h2>
-            <p>Paste questions you found in public forums. Add public HTML pages that may answer them. The app reads those pages now, then drafts a script for Starter. The links are supplied by you and still require human source review.</p>
-            <form onSubmit={submitStarter}>
-              <label htmlFor="buyer-questions">Buyer questions, one per line (up to 8)</label>
-              <textarea id="buyer-questions" rows={4} value={questions} onChange={event => setQuestions(event.target.value)}
-                placeholder="What should I check before buying my first dump truck?" required />
-              <label htmlFor="evidence-urls">Evidence page URLs, one per line (up to 5)</label>
-              <textarea id="evidence-urls" rows={4} value={urls} onChange={event => setUrls(event.target.value)}
-                placeholder="https://www.ontario.ca/page/get-commercial-vehicle-operators-registration-cvor-certificate" required />
-              <div className="form-footer"><small>Live mode needs OPENAI_API_KEY on the server.</small>
-                <button className="primary" disabled={busy || !questions.trim() || !urls.trim()}>{busy ? 'Reading sources and writing...' : 'Generate live Starter draft'}</button>
+          <section className="submission" aria-label="New submission">
+            <div className="agent-flow" role="img" aria-label="Research Agent under construction. Content Orchestration Agent.">
+              <div className="agent research-agent" aria-hidden="true">
+                Research<br />Agent
+                <span className="tool hammer">🔨</span>
+                <span className="tool wrench">🔧</span>
               </div>
-            </form>
+              <div className="flow-arrow horizontal" aria-hidden="true" />
+              <div className="agent orchestration-agent" aria-hidden="true">Content<br />Orchestration<br />Agent</div>
+            </div>
+            <div className="flow-arrow vertical" aria-hidden="true" />
+            <div className="submission-modes" role="group" aria-label="Submission mode">
+              <button type="button" aria-pressed={submissionMode === 'live'} onClick={() => setSubmissionMode('live')}>Live sources</button>
+              <button type="button" aria-pressed={submissionMode === 'template'} onClick={() => setSubmissionMode('template')}>Template demo</button>
+            </div>
+            {submissionMode === 'live' ? <form onSubmit={submitStarter} className="submission-form">
+              <label htmlFor="buyer-questions">Buyer questions <small>One per line, up to 8</small></label>
+              <textarea id="buyer-questions" rows={2} value={questions} onChange={event => setQuestions(event.target.value)}
+                placeholder="Ask your question here…" required />
+              <div className="sample-buttons" role="group" aria-label="Try a template demo">{desk?.samples.slice(0, 3).map(sample =>
+                <button type="button" key={sample.label} onClick={() => {
+                  setInput(sample.input);
+                  setSubmissionMode('template');
+                  requestAnimationFrame(() => document.getElementById('submission-input')?.focus());
+                }}>+ {sample.label}</button>
+              )}</div>
+              <div className="flow-arrow vertical source-arrow" aria-hidden="true" />
+              <label htmlFor="evidence-urls">Source URLs <small>One public web page per line, up to 5</small></label>
+              <textarea id="evidence-urls" rows={2} value={urls} onChange={event => setUrls(event.target.value)}
+                placeholder="Add your credible sources here…" required />
+              <div className="form-footer"><small>Live mode requires a server API key.</small>
+                <button className="primary" disabled={busy || !questions.trim() || !urls.trim()}>{busy ? 'Reading sources and writing…' : 'Generate live Starter draft'}</button>
+              </div>
+            </form> : <form onSubmit={submit} className="submission-form">
+              <label htmlFor="submission-input">Topic, article URL, or pasted text</label>
+              <textarea id="submission-input" value={input} onChange={event => setInput(event.target.value)} maxLength={24000}
+                placeholder="Ask your question here…" rows={4} required />
+              <div className="sample-buttons" role="group" aria-label="Demo examples">{desk?.samples.map(sample =>
+                <button type="button" key={sample.label} onClick={() => {
+                  setInput(sample.input);
+                  document.getElementById('submission-input')?.focus();
+                }}>+ {sample.label}</button>
+              )}</div>
+              <div className="form-footer">
+                <small>{input.length.toLocaleString()} / 24,000</small>
+                <button className="primary" disabled={busy || !desk || !input.trim()}>{busy ? 'Preparing review…' : 'Create review'}</button>
+              </div>
+            </form>}
           </section>
-          <h2>Existing template demo</h2>
-          <div className="submission-grid">
-            <section className="card compose">
-              <h2>What should we cover?</h2>
-              <form onSubmit={submit}>
-                <label htmlFor="submission-input">Topic, article URL, or pasted text</label>
-                <textarea id="submission-input" value={input} onChange={event => setInput(event.target.value)} maxLength={24000}
-                  placeholder="e.g. What should I check before buying my first dump truck?" rows={7} required />
-                <div className="form-footer">
-                  <small>{input.length.toLocaleString()} / 24,000</small>
-                  <button className="primary" disabled={busy || !desk || !input.trim()}>{busy ? 'Preparing review…' : 'Create review'}</button>
-                </div>
-              </form>
-            </section>
-            <section className="card examples">
-              <h2>Try a demo topic</h2>
-              <p>Load an example into the submission field.</p>
-              {desk?.samples.map(sample => <button key={sample.label} onClick={() => {
-                setInput(sample.input);
-                document.getElementById('submission-input')?.focus();
-              }}>{sample.label}<span aria-hidden="true">＋</span></button>)}
-            </section>
-          </div>
           <section className="personas">
             <h2>Editorial personas</h2>
             <div className="persona-grid">{desk?.personas.map(persona => <div key={persona.id} className="card persona">
@@ -191,6 +196,7 @@ function App() {
         </>}
       </div>
     </main>
+    <footer className="site-footer">© 2026 Idea Alchemists · Brampton AI Innovator Hackathon. All rights reserved.</footer>
   </div>;
 }
 
