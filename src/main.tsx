@@ -19,9 +19,7 @@ async function api<T>(path: string, method = 'GET', body?: object): Promise<T> {
 function App() {
   const [desk, setDesk] = useState<Desk>();
   const [input, setInput] = useState('');
-  const [questions, setQuestions] = useState('');
   const [urls, setUrls] = useState('');
-  const [submissionMode, setSubmissionMode] = useState<'live' | 'template'>('live');
   const [page, setPage] = useState<Page>('submit');
   const [selected, setSelected] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,30 +43,25 @@ function App() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!input.trim()) return;
+    const urlLines = urls.split('\n').map(line => line.trim()).filter(Boolean);
     setBusy(true);
     setError('');
     setNotice('');
     try {
-      updateJob(await api<Job>('/api/jobs', 'POST', { input }));
+      const updated = urlLines.length
+        ? await api<Job>('/api/starter', 'POST', {
+            questions: input.split('\n').map(line => line.trim()).filter(Boolean), urls: urlLines
+          })
+        : await api<Job>('/api/jobs', 'POST', { input });
+      updateJob(updated);
       setPage('review');
       setInput('');
+      setUrls('');
     } catch (error) {
       setError((error as Error).message);
     } finally {
       setBusy(false);
     }
-  }
-
-  async function submitStarter(event: FormEvent) {
-    event.preventDefault();
-    const questionLines = questions.split('\n').map(line => line.trim()).filter(Boolean);
-    const urlLines = urls.split('\n').map(line => line.trim()).filter(Boolean);
-    setBusy(true); setError(''); setNotice('');
-    try {
-      updateJob(await api<Job>('/api/starter', 'POST', { questions: questionLines, urls: urlLines }));
-      setPage('review');
-    } catch (error) { setError((error as Error).message); }
-    finally { setBusy(false); }
   }
 
   async function updateDraft(draft: Draft, patch: { content?: Content; status?: Status }) {
@@ -110,8 +103,7 @@ function App() {
         {notice && <p role="status" className="notice">{notice}</p>}
         {page === 'submit' ? <>
           <section className="submission" aria-label="New submission">
-            <section className="agent-flow" aria-labelledby="agent-flow-title">
-              <h2 id="agent-flow-title">Agent workflow</h2>
+            <section className="agent-flow" aria-label="Agent workflow">
               <div className="agent-flow-cards">
                 <div className="agent-card">
                   <span className="agent-icon" aria-hidden="true">
@@ -130,51 +122,27 @@ function App() {
                 </div>
               </div>
             </section>
-            <div className="flow-arrow vertical" aria-hidden="true" />
-            <div className="submission-modes" role="group" aria-label="Submission mode">
-              <button type="button" aria-pressed={submissionMode === 'live'} onClick={() => setSubmissionMode('live')}>Live sources</button>
-              <button type="button" aria-pressed={submissionMode === 'template'} onClick={() => setSubmissionMode('template')}>Template demo</button>
-            </div>
-            {submissionMode === 'live' ? <form onSubmit={submitStarter} className="submission-form">
-              <label htmlFor="buyer-questions">Buyer questions <small>One per line, up to 8</small></label>
-              <textarea id="buyer-questions" rows={2} value={questions} onChange={event => setQuestions(event.target.value)}
-                placeholder="Ask your question here…" required />
-              <div className="sample-buttons" role="group" aria-label="Try a template demo">{desk?.samples.slice(0, 3).map(sample =>
-                <button type="button" key={sample.label} onClick={() => {
-                  setInput(sample.input);
-                  setSubmissionMode('template');
-                  requestAnimationFrame(() => document.getElementById('submission-input')?.focus());
-                }}>+ {sample.label}</button>
-              )}</div>
-              <div className="flow-arrow vertical source-arrow" aria-hidden="true" />
-              <label htmlFor="evidence-urls">Source URLs <small>One public web page per line, up to 5</small></label>
-              <textarea id="evidence-urls" rows={2} value={urls} onChange={event => setUrls(event.target.value)}
-                placeholder="Add your credible sources here…" required />
-              <div className="form-footer"><small>Live mode requires a server API key.</small>
-                <button className="primary" disabled={busy || !questions.trim() || !urls.trim()}>{busy ? 'Reading sources and writing…' : 'Generate live Starter draft'}</button>
-              </div>
-            </form> : <form onSubmit={submit} className="submission-form">
-              <label htmlFor="submission-input">Topic, article URL, or pasted text</label>
+            <div className="workflow-to-form" aria-hidden="true"><span /></div>
+            <form onSubmit={submit} className="submission-form">
+              <label htmlFor="submission-input">Question or topic <small>One question per line for linked sources</small></label>
               <textarea id="submission-input" value={input} onChange={event => setInput(event.target.value)} maxLength={24000}
-                placeholder="Ask your question here…" rows={4} required />
-              <div className="sample-buttons" role="group" aria-label="Demo examples">{desk?.samples.map(sample =>
+                placeholder="Ask your question here." rows={2} required />
+              <div className="sample-buttons" role="group" aria-label="Try a sample">{desk?.samples.filter(sample => sample.label !== 'Both personas').map(sample =>
                 <button type="button" key={sample.label} onClick={() => {
                   setInput(sample.input);
+                  setUrls('');
                   document.getElementById('submission-input')?.focus();
                 }}>+ {sample.label}</button>
               )}</div>
+              <div className="flow-arrow vertical source-arrow" aria-hidden="true" />
+              <label htmlFor="evidence-urls">Source URLs <small>Optional; one public web page per line, up to 5</small></label>
+              <textarea id="evidence-urls" rows={2} value={urls} onChange={event => setUrls(event.target.value)}
+                placeholder="Add your credible sources here." />
               <div className="form-footer">
-                <small>{input.length.toLocaleString()} / 24,000</small>
-                <button className="primary" disabled={busy || !desk || !input.trim()}>{busy ? 'Preparing review…' : 'Create review'}</button>
+                <small>{urls.trim() ? 'Linked sources use the configured API key.' : 'Sample topics work without an API key.'}</small>
+                <button className="primary" disabled={busy || !desk || !input.trim()}>{busy ? 'Preparing review...' : 'Create review'}</button>
               </div>
-            </form>}
-          </section>
-          <section className="personas">
-            <h2>Editorial personas</h2>
-            <div className="persona-grid">{desk?.personas.map(persona => <div key={persona.id} className="card persona">
-              <span className={'persona-icon ' + persona.id} aria-hidden="true">{persona.id === 'scout' ? '◈' : '◒'}</span>
-              <div><h3>{persona.name}</h3><span className="eyebrow">AI-GENERATED PERSONA</span><p>{persona.audience}</p></div>
-            </div>)}</div>
+            </form>
           </section>
         </> : <>
           <section className="hero">
