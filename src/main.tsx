@@ -179,12 +179,29 @@ function App() {
   </div>;
 }
 
+function buildHiggsfieldPrompt(draft: Draft, content: Content) {
+  const scenes = content.shots.map((shot, index) =>
+    `${index + 1}. Visual: ${shot.visual}\n   Audio: ${shot.audio}`
+  ).join('\n');
+  return `Create a polished 9:16 vertical video for ${draft.persona.audience}.\n\n` +
+    `Tone and voice: ${draft.persona.voice}\n` +
+    `Content angle: ${content.angle}\n` +
+    `Opening hook: ${content.hook}\n\n` +
+    `Storyboard:\n${scenes}\n\n` +
+    `Voiceover script:\n${content.script}\n\n` +
+    `Keep the visuals realistic and the pacing clear. Use only the supplied script and scene details for factual claims. ` +
+    `Do not add statistics, logos, or unsupported claims. Keep any on-screen text brief and readable.\n\n` +
+    `Publishing caption (not voiceover):\n${content.caption}`;
+}
+
 function DraftCard({ draft, busy, save }: {
   draft: Draft; busy: boolean;
   save: (patch: { content?: Content; status?: Status }) => Promise<boolean>;
 }) {
   const [editing, setEditing] = useState(false);
   const [content, setContent] = useState(draft.content);
+  const [copyMessage, setCopyMessage] = useState('');
+  const higgsfieldPrompt = buildHiggsfieldPrompt(draft, content);
   const fields = [['angle', 'Content angle'], ['fit', 'Why it fits'], ['answer', 'Answer grounded in sources'], ['hook', 'Hook'], ['script', 'Script'], ['caption', 'Caption']] as const;
   const activeFields = fields.filter(([key]) => key !== 'answer' || content.answer !== undefined);
   return <article className="card draft">
@@ -192,6 +209,21 @@ function DraftCard({ draft, busy, save }: {
       <div><span className="eyebrow">AI-GENERATED PERSONA</span><h2>{draft.persona.name}</h2><p>{draft.persona.audience}</p></div>
       <span className={'status ' + draft.status}>{draft.status === 'pending' ? 'Needs review' : draft.status}</span>
     </header>
+    {!editing && <section className="higgsfield-prompt" aria-label="Higgsfield video prompt">
+      <div className="prompt-heading">
+        <div><h3>Higgsfield video prompt</h3><p>Review the draft, then copy this prompt into Higgsfield.</p></div>
+        <button type="button" onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(higgsfieldPrompt);
+            setCopyMessage('Copied to clipboard');
+          } catch {
+            setCopyMessage('Copy failed. Select the prompt text instead.');
+          }
+        }}>Copy prompt</button>
+      </div>
+      <textarea readOnly aria-label="Higgsfield prompt text" value={higgsfieldPrompt} rows={8} />
+      {copyMessage && <small role="status">{copyMessage}</small>}
+    </section>}
     {editing ? <form className="edit-form" onSubmit={async event => {
       event.preventDefault();
       if (await save({ content: { ...content, assumptions: content.assumptions.filter(item => item.trim()) } })) setEditing(false);

@@ -154,6 +154,12 @@ button.primary:not(:disabled):hover { background: #ff9e61; }
 .input-details p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .draft-list { display: grid; gap: 16px; margin-top: 16px; }
 .draft header { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; }
+.higgsfield-prompt { margin-top: 20px; padding: 18px; border: 1px solid #735542; border-radius: 12px; background: #211b18; }
+.prompt-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.prompt-heading p, .higgsfield-prompt small { color: var(--muted); font-size: .85rem; }
+.prompt-heading button { border: 1px solid #735542; border-radius: 8px; padding: 8px 12px; background: #503426; font-weight: 650; }
+.prompt-heading button:hover { border-color: var(--accent); }
+.higgsfield-prompt textarea { min-height: 180px; margin-top: 12px; resize: vertical; line-height: 1.5; }
 .status { text-transform: capitalize; flex-shrink: 0; }
 .status.pending { background: #f6edda; color: #73501d; }
 .status.rejected { background: #f9e7e2; color: #8b352a; }
