@@ -1,16 +1,26 @@
-# Field Desk
+# ContextIQ
 
-Field Desk is a local prototype for Brampton AI Innovator Challenge 3B. It turns industry topics, article links, and pasted articles into short-video packages for a coordinator to review. Job Site Scout serves Brampton-area crews. Starter serves drivers considering their first dump truck.
+ContextIQ is a prototype for Brampton AI Innovator Challenge 3B. It turns questions and public source links into short-video drafts for a coordinator to review. Job Site Scout serves Brampton-area crews. Starter serves drivers considering their first dump truck.
 
 ## Live first-time buyer demo
 
-The **Generate a first-time buyer script** form is the current presentation flow. Paste 1–8 buyer questions (one per line), then 1–5 public HTML article URLs (one per line). The persona is fixed to **Starter**. The backend reads the pages at submission time, selects short passages relevant to the questions, and asks the configured model to write an answer, video script, caption, and storyboard. Each factual sentence should have a source ID and the exact passage offered in support. The review screen shows those passages next to claims; a coordinator must decide whether each passage genuinely supports the wording.
+The single submission form accepts a question or topic and optional public source URLs. Without URLs it creates a deterministic demo review without an API key. With URLs it sends 1-8 buyer questions and 1-5 public HTML article URLs to the live Starter path. The backend reads the pages at submission time, selects short passages relevant to the questions, and asks the configured model to write an answer, video script, caption, and storyboard. The review screen displays evidence beside claims and a copyable Higgsfield video prompt for each draft.
 
-Set `OPENAI_API_KEY` in the backend `.env` to enable this live generation path and restart the server. The key is never sent to the browser. ChatGPT subscriptions do not provide API billing by themselves. The existing topic form below the live form remains a deterministic template demo without a key.
+Set `OPENAI_API_KEY` in the backend `.env` to enable linked-source generation and restart the server. The key is never sent to the browser. ChatGPT subscriptions do not provide API billing by themselves.
 
 For a dependable presentation, try a question such as “What should I check before becoming an Ontario owner-operator?” with the Ontario CVOR URL in `config/sources.json`. If the live page cannot be fetched, the app clearly marks that it used the preloaded snapshot for that known URL. Other pages must be public readable HTML. Some sites block automated reading or rely on browser-only JavaScript; the app reports this as an error instead of pretending it read them. Forum questions are pasted by the team, not scraped. The URLs supplied for answers are not automatically deemed credible.
 
-This stage deliberately does not include a research agent, persona selection, video rendering, or social publishing. Approval stays local.
+The workflow graphic illustrates research and content orchestration. This prototype does not render video or publish to social platforms. Approval stays in the local review record.
+
+## Host the interactive demo
+
+The source code lives on GitHub, but GitHub Pages hosts static files and cannot run this app's Node API. The review queue, sample submissions, editing, and source intake depend on that API. To host the working demo, connect this GitHub repository to a **Render Web Service** using the included `render.yaml` Blueprint. Render builds the Vite frontend and runs the Node server at one public URL. Merge the latest `live-starter-demo` branch into `main` first if Render will deploy `main`.
+
+In Render, choose **New > Blueprint**, connect the GitHub repository, and select the branch with `render.yaml`. Review the Free plan before creating the service. The Blueprint sets Node 22.16, builds with `npm ci && npm run build`, and starts with `npm start`. The service must bind to `0.0.0.0`; `render.yaml` supplies `HOST` for that. Render supplies `PORT`.
+
+This configuration intentionally has no API key. The no-key demo works; linked-source AI generation requires `OPENAI_API_KEY` added privately in the Render dashboard. Do not commit a `.env` file or put a key in browser code. A public API key-backed service needs access controls and spending limits before it is exposed to visitors.
+
+On Render's Free plan, the service sleeps after idle time and its local JSON review records can disappear after a restart or redeploy. Use public or fictional demo submissions only. For lasting shared records, replace the JSON store with a persistent database or use a paid persistent disk.
 
 ## Run locally
 
@@ -22,7 +32,7 @@ npm run build
 npm start
 ```
 
-Open [Field Desk](http://127.0.0.1:4173). The default mode uses deterministic sample outputs and needs no API key. Edits and decisions persist as JSON in `local-data/`. The server listens on loopback and is intended for a single local process.
+Open [ContextIQ](http://127.0.0.1:4173). The default mode uses deterministic sample outputs and needs no API key. Edits and decisions persist as JSON in `local-data/`. The server listens on loopback locally unless `HOST` is set for deployment.
 
 ## Demo walkthrough
 
